@@ -1,0 +1,126 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+#define DUMMY 0x12345
+typedef struct entry per_entry;
+
+struct entry 
+{
+	int value;
+	per_entry *next;
+};
+
+per_entry* insert_entry(per_entry *head, int value) {
+	per_entry *new_entry;
+	new_entry = (per_entry *)malloc(sizeof(*new_entry));
+	if (new_entry == NULL) {
+		return NULL;
+	}
+	new_entry->value = value;
+	new_entry->next = NULL;
+	if (head == NULL) {
+
+		head = new_entry;
+	} else {
+		per_entry *temp = head;
+		while(temp && (temp->next != NULL)) {
+			temp=temp->next;
+		}
+		if (temp) {
+			temp->next = new_entry;
+		}
+	}
+
+	return head;	
+		
+}
+
+per_entry *delete_entry(per_entry *root, per_entry *del_entry)
+{
+	if (del_entry == NULL) {
+		return root;
+	}
+	per_entry *temp = del_entry->next;
+	if (temp) {
+		del_entry->value = temp->value;
+		del_entry->next = temp->next;
+		free(temp);
+	}
+	return root;
+}
+
+
+
+
+int main(int argc, char *argv[])
+{
+	FILE *fp = NULL;
+
+	char line[1024];
+	char *ptr;
+	int max_number = 0;
+	int exec_number = 0;
+	int start = 0;
+	
+
+
+	fp = fopen(argv[1], "r");
+	
+	while(fgets(line, sizeof(line), fp)) {
+		ptr = strtok(line,  ",'\n'");
+		max_number = atoi(ptr);
+		int index = 0;
+		per_entry *root = NULL;
+		per_entry *temp;
+		start = 0;
+		while(index < max_number) {
+			root = insert_entry(root, index); 
+			index++;
+		}
+
+		//ADD dummy
+			root = insert_entry(root, DUMMY);
+		
+
+		ptr = strtok(NULL, ",'\n'");
+		exec_number = atoi(ptr);
+		
+		temp = root;
+		int iterator = 0;
+
+		while(temp) {
+			if (temp->value == DUMMY) {
+				if (root && root->value != DUMMY) {
+					temp = root;
+				} else {
+					temp = NULL;
+				}
+				continue;
+			}
+			
+			if (iterator == exec_number-1) {
+				if (!start) {
+					printf("%d", temp->value);
+					start = 1;
+				} else {
+					printf(" %d", temp->value);
+				}
+				root = delete_entry(root, temp);
+				iterator = 0;
+			} else {
+				temp = temp->next;
+				iterator++;
+			}
+		}
+		printf("\n");	
+		while(root) {
+			temp = root;
+			root = root->next;
+			free(temp);
+		}
+		root = NULL;
+	}
+	fclose(fp);
+	return 0;
+}
